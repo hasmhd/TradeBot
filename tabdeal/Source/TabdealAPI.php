@@ -16,12 +16,17 @@
 class TabdeaAPI{
     //'WJCGOVYKX37OGDBLV4HA'
     
-    private $apiKey = 'kzUlQV5mZ2ukR0vFc2MHMmtk1uqhnpnm1FqGcCy38znnNUyncyAu01zk50qq2lZv';
-    private $apiSecret = 'NXfgKpJ3woPBHblXeSR5wT5CubZPUCjYfAEusOW2ruPW7wRAq2CX2dn10XYCM3AI';
+    private $apiKey = '';
+    private $apiSecret = '';
 
     public function __construct()
     {
+
         date_default_timezone_set("Iran");
+        $env = parse_ini_file(__DIR__ . '/.env');
+        $this->apiKey = $env["API_KEY"];
+        $this->apiSecret = $env["API_SECRET"];
+
     }
     public function getTimestamp(){
         return  floor(microtime(true) * 1000);

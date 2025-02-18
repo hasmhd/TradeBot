@@ -6,6 +6,7 @@
     //var_dump($test->price());
     class TabdealSite
     {
+        //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
         private $tapi = null;
         //private $apiAddress = 'https://api.tabdeal.org:8443';
         public $markets = null;
