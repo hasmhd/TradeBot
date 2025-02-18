@@ -1,0 +1,29 @@
+{
+    "symbol": "BTCIRT",
+    "tabdealSymbol": "BTC_IRT",
+    "orderId": 139,
+    "orderListId": -1,
+    "clientOrderId": null,
+    "transactTime": 1650126344421,
+    "price": "0.00000000",
+    "origQty": "0.00100000",
+    "executedQty": "0.00100000",
+    "cummulativeQuoteQty": "99999.99900000",
+    "cumulativeQuoteQty": "99999.99900000",
+    "status": "FILLED",
+    "type": "MARKET",
+    "side": "SELL",
+    "stopPrice": "0.00000000",
+    "updateTime": 1650126344546,
+    "isWorking": false,
+    "isStopOrderTriggered": false,
+    "fills": [
+        {
+            "price": "99999999.00000000",
+            "qty": "0.00100000",
+            "commission": "399.99999600",
+            "commissionAsset": "IRT",
+            "tradeId": 4
+        }
+    ]
+}

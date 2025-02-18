@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 23.0.2, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 1875 1875" style="enable-background:new 0 0 1875 1875;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill-rule:evenodd;clip-rule:evenodd;fill:url(#SVGID_1_);}
+	.st1{fill-rule:evenodd;clip-rule:evenodd;fill:url(#SVGID_2_);}
+	.st2{fill-rule:evenodd;clip-rule:evenodd;fill:#FFFFFF;}
+	.st3{fill-rule:evenodd;clip-rule:evenodd;fill:#FC9965;}
+	.st4{fill-rule:evenodd;clip-rule:evenodd;fill:#FF2D55;}
+	.st5{fill-rule:evenodd;clip-rule:evenodd;fill:url(#SVGID_3_);}
+	.st6{fill-rule:evenodd;clip-rule:evenodd;fill:#FFBC5B;}
+	.st7{fill-rule:evenodd;clip-rule:evenodd;fill:#FFC95B;}
+</style>
+<title>Dogecoin (DOGE)</title>
+<g>
+	
+		<linearGradient id="SVGID_1_" gradientUnits="userSpaceOnUse" x1="401.006" y1="1478.3085" x2="397.6915" y2="1474.994" gradientTransform="matrix(400 0 0 -400 -158802 591598)">
+		<stop  offset="0" style="stop-color:#FF2D55"/>
+		<stop  offset="1" style="stop-color:#FFBC5B"/>
+	</linearGradient>
+	<circle class="st0" cx="937.5" cy="937.5" r="937.5"/>
+	
+		<linearGradient id="SVGID_2_" gradientUnits="userSpaceOnUse" x1="401.3399" y1="1477.4575" x2="401.3399" y2="1472.77" gradientTransform="matrix(125 0 0 -150 -49210.3008 222228)">
+		<stop  offset="0" style="stop-color:#A524B3"/>
+		<stop  offset="1" style="stop-color:#FF2D55"/>
+	</linearGradient>
+	<path class="st1" d="M664.2,609.4v703.1h585.9L664.2,609.4z"/>
+	<path class="st2" d="M78.3,1312.5h585.9V609.4L78.3,1312.5z"/>
+	<path class="st3" d="M187.5,1500c53.4,70.8,116.7,134.1,187.5,187.5h1125c70.8-53.4,134.1-116.7,187.5-187.5H187.5z"/>
+	<path class="st4" d="M375,1687.5C531.6,1805.2,726.6,1875,937.5,1875s405.9-69.8,562.5-187.5H375z"/>
+	
+		<linearGradient id="SVGID_3_" gradientUnits="userSpaceOnUse" x1="406.7926" y1="1474.5784" x2="406.7926" y2="1469.8909" gradientTransform="matrix(91.7 0 0 -110 -35830.2969 163188)">
+		<stop  offset="0" style="stop-color:#A524B3"/>
+		<stop  offset="1" style="stop-color:#FF2D55"/>
+	</linearGradient>
+	<path class="st5" d="M1257.7,984.4V1500h429.8L1257.7,984.4z"/>
+	<path class="st6" d="M1257.7,1312.5H78.3c29.1,67,66.1,129.8,109.2,187.5h1070.6v-187.5H1257.7z"/>
+	<path class="st2" d="M828.3,1500h429.4V984.4L828.3,1500z"/>
+	<circle class="st7" cx="1257.7" cy="609.4" r="234.4"/>
+	<circle class="st7" cx="664.2" cy="351.6" r="117.2"/>
+</g>
+</svg>

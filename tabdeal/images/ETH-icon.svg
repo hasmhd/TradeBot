@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+    <defs>
+        <style>
+            .cls-2{fill:#ccc}.cls-3{fill:#eee}
+        </style>
+    </defs>
+    <g id="Group_113" transform="translate(-1500 -1242)">
+        <g id="Group_102" transform="translate(0 -14)">
+            <circle id="Ellipse_23" cx="20" cy="20" r="20" fill="#687fe3" transform="translate(1500 1256)"/>
+            <g id="Layer_1" transform="translate(1125.129 1261.412)">
+                <g id="_1421394342400" transform="translate(385.959)">
+                    <g id="Group_101">
+                        <path id="Path_2619" d="M986.6 0l-.2.665v19.281l.2.2 8.95-5.291z" class="cls-2" transform="translate(-977.647)"/>
+                        <path id="Path_2620" d="M394.909 0l-8.95 14.851 8.95 5.291V0z" class="cls-3" transform="translate(-385.959)"/>
+                        <path id="Path_2621" d="M992.368 1140.243l-.11.134v6.869l.11.322 8.956-12.613z" class="cls-2" transform="translate(-983.417 -1118.407)"/>
+                        <path id="Path_2622" d="M394.909 1147.568v-7.325l-8.95-5.288z" class="cls-3" transform="translate(-385.959 -1118.407)"/>
+                        <path id="Path_2623" fill="#bbb" d="M999.82 748.882l8.95-5.291-8.95-4.068z" transform="translate(-990.87 -728.741)"/>
+                        <path id="Path_2624" fill="#ddd" d="M385.959 743.592l8.95 5.291v-9.359z" transform="translate(-385.959 -728.741)"/>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

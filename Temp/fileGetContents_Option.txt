@@ -1,0 +1,21 @@
+$opts = [
+        "http" => [
+            "method" => "GET",
+            "header" => "Accept :Application/json, text/plain, */*\r\n".
+                "Accept-Encoding : gzip, deflate, br\r\n" .
+                "Accept-Language : en-US,en;q=0.5\r\n" . 
+                "Authorization : HHRAA eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJ1c2VyX2lkIjo5MTY0NCwidXNlcm5hbWUiOiI5MTI1MzMyNjAxIiwiZXhwIjoxNjM5MTc0Nzg2LCJlbWFpbCI6IiIsIm9yaWdfaWF0IjoxNjM5MTE0Nzg2fQ.OZ_D8jAp4n5tjmDwN48aiWNVEYudUOtSPjmg9hq71lDa82uynX_k2b61Ktbxh0oST_OKLV6qoLSCPXUj1gkhvA\r\n" .
+                "Cache-Control : max-age=0\r\n" .
+                "Connection : keep-alive\r\n" .
+                "Host : api.tabdeal.org:8443\r\n" .
+                "Origin : https://tabdeal.org\r\n" .
+                "Referer : https://tabdeal.org/\r\n" .
+                "Sec-Fetch-Dest : empty\r\n" .
+                "Sec-Fetch-Mode : cors\r\n" . 
+                "Sec-Fetch-Site : same-site\r\n" .
+                "TE : trailers\r\n" . 
+                "User-Agent : Mozilla/5.0 (Windows NT 6.1; rv:94.0) Gecko/20100101 Firefox/94.0\r\n"
+        ]
+    ];
+        //$context = stream_context_create($opts);
+    //$statisticsJson = file_get_contents("https://api.tabdeal.org:8443/r/treasury/wallet/", false, $context);

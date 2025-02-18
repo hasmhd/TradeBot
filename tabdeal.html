@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+       [class*="col-"] {
+float: left;
+padding: 0px;
+width: 100%;
+/* max-height:300px; */
+}
+
+@media only screen and (min-width: 600px) {
+.col-s-1 {width: 8.33%;}
+.col-s-2 {width: 16.66%;}
+.col-s-3 {width: 25%;}
+.col-s-4 {width: 33.33%;}
+.col-s-5 {width: 41.66%;}
+.col-s-6 {width: 50%;}
+.col-s-7 {width: 58.33%;}
+.col-s-8 {width: 66.66%;}
+.col-s-9 {width: 75%;}
+.col-s-10 {width: 83.33%;}
+.col-s-11 {width: 91.66%;}
+.col-s-12 {width: 100%;}
+}
+
+@media only screen and (min-width: 768px) {
+.col-1 {width: 8.33%;}
+.col-2 {width: 16.66%;}
+.col-3 {width: 25%;}
+.col-4 {width: 33.33%;}
+.col-5 {width: 41.66%;}
+.col-6 {width: 50%;}
+.col-7 {width: 58.33%;}
+.col-8 {width: 66.66%;}
+.col-9 {width: 75%;}
+.col-10 {width: 83.33%;}
+.col-11 {width: 91.66%;}
+.col-12 {width: 100%;}
+}
+table, tr {
+  border: 1px solid black;
+  border-collapse: collapse;
+}
+th {
+  text-align: left;
+}
+tr {
+  
+  height: 20px;
+}
+th, td {
+  background-color: #96D4D4;
+}
+/* td{
+    border: 1px solid black;
+    border-radius: 10px;
+} */
+
+.asset-icon{
+    vertical-align: middle; 
+    margin: 1px; 
+    padding: 1px; 
+    width:16px;
+    height:16px;
+}
+.asset-name{
+    margin: 1px; 
+    padding: 1px; 
+}
+
+</style>
+</head>
+<body>
+    <div class="col-8" style="overflow-y:auto;height:550px;font-size:12px;">
+        <h2>Asset</h2>
+        <table class="asset-table" id="asset-table"  style="width: 98%">
+            <tbody class="asset-table-body" id="asset-table-body">
+            </tbody>
+        </table>
+        <h2>Orders</h2>
+        <table class="orders-table" id="orders-table"  style="width: 98%">
+            <tbody class="orders-table-body" id="orders-table-body">
+            </tbody>
+        </table>
+    </div>
+    <div class="col-4" id="output-area" style="background-color: rgb(168, 167, 167); color: white; overflow-y:hidden;height:550px;font-size: 11px;">
+        <div class="report-area" id="report-area" style="background-color: rgb(8, 0, 0); color: white; overflow-y:auto;height:250px;width:100%;font-size: 11px;"></div>
+        <p class="connection-area" id="connection-area" style="margin:2px;background-color:rgb(10, 0, 0); color: white;width:100%;;font-size: 11px;"></p>
+        <div class="message-area" id="message-area" style="padding-top: 4px; background-color: rgb(8, 0, 0); color: white; overflow-y:auto;overflow-x:hidden;height:259px;width:100%;font-size: 11px;"></div>
+    </div>
+    <div class="footer">
+        <form id="commandForm">
+            <input class="command" name="command" id="command" type="text" style="width: 99%; height: 20px;">
+        </form>
+    </div>
+    <script>
+        var listenkey = null;
+        var liskeyintervalID = undefined;
+        var commission = undefined;
+        var asset = undefined;
+        var usdtIRTBids = undefined;
+        var usdtIRTAsks = undefined;
+        var markets = ['USDT_IRT'];
+
+        var commandForm = document.getElementById("commandForm");
+        commandForm.addEventListener('submit', handleCommand);
+        
+        getAcount();
+        getOrders();
+        async function getListenkey(){
+            showMessage('listen key requsted.');
+            let response = await fetch("/tabdeal/Source/tabdealTools.php", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                },
+                body: `listenkey=${listenkey}`,
+            });
+            if(response.status === 200)
+            {
+                let res = await response.text();
+                var jso = JSON.parse(res);
+                listenkey = jso.listenKey;
+                if(listenkey){
+                    if(liskeyintervalID !== undefined){
+                        clearInterval(liskeyintervalID);
+                    }
+                    liskeyintervalID = setInterval(getListenkey, 59 * 60000);
+                    showMessage('listen key recieved. timer set for 59 mins later.');
+                    return listenkey;
+                }
+            }
+            else {
+                    return null;                    
+            }
+        }
+        //function 
+        function socketManager()
+        {
+            var params = [];
+            markets.forEach(mrkt => {
+                params.push(mrkt.replace('_','').toLowerCase() + "@depth@2000ms");
+            })
+            socket = new WebSocket('wss://api.tabdeal.ir/stream/');
+            socket.onopen = function(e) {
+                var sdata = {
+                                "method": "SUBSCRIBE",
+                                "params": params, 
+                                "id": 1
+                            }
+                socket.send(JSON.stringify(sdata));
+                showMessage("[websocket] Connection established. Sending request to tabdeal.org...");
+            };
+
+            socket.onmessage = function(event) {
+                var jso = JSON.parse(event.data);
+                var tokenSymbol = '';
+                var marketSymbol = '';
+                if(jso.hasOwnProperty('stream') ){
+                    if(jso.data.s.endsWith("IRT")){
+                        tokenSymbol = jso.data.s.substr(0, jso.data.s.length - 3);
+                        marketSymbol = tokenSymbol + "_IRT";
+                    }
+                    else if(jso.data.s.endsWith("USDT")){
+                        tokenSymbol = jso.data.s.substr(0, jso.data.s.length - 4);
+                        marketSymbol = tokenSymbol + "_USDT";
+                    }
+
+                    showConnectionData(marketSymbol + " market's data received!")
+                    
+                    if(asset !== undefined){
+                        var ast = asset[tokenSymbol];
+                        if(ast){
+                            if(!marketSymbol.endsWith("_IRT")){
+                                updateAssetUSDT(tokenSymbol, marketSymbol, jso.data.b, jso.data.a);
+                            }
+                            
+                            else if( marketSymbol == "USDT_IRT"){
+                               updateAssetIRT(tokenSymbol, marketSymbol, jso.data.b, jso.data.a);
+                            }
+                        }
+                    }
+                }
+            };
+
+            socket.onclose = function(event) {
+                if (event.wasClean) {
+                    showMessage(`[websocket] Connection closed cleanly, code=${event.code} reason=${event.reason}`);
+                } else {
+                    // e.g. server process killed or network down
+                    // event.code is usually 1006 in this case
+                    showMessage('[websocket] Connection died');
+                }
+                socketManager();
+            };
+
+            socket.onerror = function(error) {
+                showMessage(`[websocket : ] ${error.message}`);
+            };
+        }   
+        function percision(tokenSymbol, value, percision = 8){
+            if(value == 0.0) return 0;
+            if(tokenSymbol == 'IRT'){
+                if(value < 0.01) return percision;
+                if(value < 1.0) return 4;
+                if(value < 100.0) return 3;
+                return 0;
+            }
+            else if(tokenSymbol == 'USDT'){
+                if(value < 1.0) return percision;
+                if(value < 100.0) return 3;
+                return 2;
+            }
+            else{
+                if(value < 0.01) return percision;
+                if(value < 1.0) return 4;
+                if(value < 100.0) return 3;
+                //if(value < 100000.0) return 4;
+                return 0;
+            }
+
+        }
+        function setAssetProperty(tokenSymbol, propertyName, postfix, value, buyValue){
+            if(asset.hasOwnProperty(tokenSymbol) && asset[tokenSymbol].hasOwnProperty(propertyName)){
+                if(asset[tokenSymbol][propertyName] != 0.0){
+                    asset[tokenSymbol]['depth'].unshift(asset[tokenSymbol][propertyName]);
+                    if(asset[tokenSymbol]['depth'].length > 10) asset[tokenSymbol]['depth'].pop();
+                }
+                if(value - asset[tokenSymbol][propertyName] < 0.0){
+                    if(asset[tokenSymbol].status > 0) asset[tokenSymbol].status = -1;
+                    else asset[tokenSymbol].status--;
+                } else {
+                    if(asset[tokenSymbol].status < 0) asset[tokenSymbol].status = 1;
+                    else asset[tokenSymbol].status++;
+                }
+                if(asset[tokenSymbol].maxUSDT < value){
+                    showMessage(tokenSymbol + " max value changed!");
+                    asset[tokenSymbol].maxUSDT = value;
+                }
+                if(asset[tokenSymbol].minUSDT > buyValue){
+                    showMessage(tokenSymbol + " min value changed!");
+                    asset[tokenSymbol].minUSDT = buyValue;
+                }
+                asset[tokenSymbol][propertyName] = value;
+                if(buyValue > 0.0 && buyValue < 999999999.0){
+                    asset[tokenSymbol].lastBuyUSDT = buyValue;
+                } 
+                // var per1 = percision(postfix.toUpperCase(), value, asset[tokenSymbol][postfix.toLowerCase() + "Percision"]);
+                // var per1 = percision(postfix.toUpperCase(), value / asset[tokenSymbol].qty, asset[tokenSymbol][postfix.toLowerCase() + "Percision"]);
+                // var cell = document.getElementById(tokenSymbol + "-" + postfix.toLowerCase());
+                // cell.innerHTML = asset[tokenSymbol][propertyName].toFixed(per1) + "(" + 
+                // (asset[tokenSymbol][propertyName] / asset[tokenSymbol].qty).toFixed(per2) + ")";
+            }
+
+        }
+        function updateAssetUSDT(tokenSymbol, marketSymbol, bids, asks)
+        {
+            var ast = asset[tokenSymbol];
+            if(ast){
+                var temp = sale(ast.qty, bids, commission / 100.0);
+                var btemp = buyCount(ast.qty, asks, commission  / 100.0);
+                if(temp != ast.lastUSDT || btemp != ast.lastBuyUSDT){  
+                    showConnectionData(marketSymbol + " market's data changed.");
+                    setAssetProperty(ast.symbol, 'lastUSDT', 'usdt', temp, btemp);
+                    if(usdtIRTBids !== undefined){
+                        ast.lastIRT = sale(temp, usdtIRTBids, commission / 100.0); 
+                        //var ircell = document.getElementById(tokenSymbol + "-irt");
+                        ///ircell.innerHTML = ast.lastIRT.toFixed(0) + "(" + (ast.lastIRT / ast.qty).toFixed(percision('IRT', ast.lastIRT / ast.qty, ast.irtPercision)) + ")";
+                    }
+                    updateAssetElements(ast);
+                }
+            }
+        }
+        function updateAssetIRT(tokenSymbol, marketSymbol, bids, asks){
+            var irtemp = sale(asset['USDT'].lastUSDT, bids, commission / 100.0);
+            if(asset['USDT'].lastIRT != irtemp){
+                showConnectionData(marketSymbol + " market's data changed.");
+                usdtIRTBids = bids;
+                usdtIRTAsks = asks;
+                for(var key in asset){
+                    var st = asset[key];
+                    if(st.symbol != 'IRT'){
+                        if(st.lastUSDT != 0.0){
+                            irtemp = sale(st.lastUSDT, usdtIRTBids, commission / 100.0); 
+                            
+                            if(st.symbol == "USDT"){
+                                var buyTemp = buyCount(st.qty, asks, commission / 100.0);
+                                setAssetProperty(st.symbol, 'lastIRT', "irt", irtemp, buyTemp);
+                            }
+                            else{
+                                st.lastIRT = irtemp;
+                                //st.lastBuyUSDT = buyTemp;
+                                //var ircell = document.getElementById(st.symbol + "-irt");
+                                //ircell.innerHTML = st.lastIRT.toFixed(0) + "(" + (st.lastIRT / st.qty).toFixed(percision("IRT", st.lastIRT / st.qty, st.irtPercision)) + ")";
+                            }
+                        }
+                    }else{
+                        var  temp  = buy(st.qty, usdtIRTAsks, commission / 100.0);
+                        setAssetProperty(st.symbol, 'lastUSDT', 'usdt', temp, 0.0);
+                    }
+
+                    updateAssetElements(st);
+                }
+            }
+        }
+        function updateAssetElements(st){
+            var cell = document.getElementById(st.symbol + "-qty");
+            if(cell) cell.innerHTML = st.qty.toFixed(percision(st.symbol, st.qty));
+            cell = document.getElementById(st.symbol + "-freeze");
+            if(cell) cell.innerHTML = (st.freeze * 1.0).toFixed(percision(st.symbol, st.freeze));
+            
+            var temp = st.lastUSDT / st.qty;
+            var per = percision("USDT", temp);
+            cell = document.getElementById(st.symbol + "-usdt");
+            if(st.symbol == "USDT") {
+                if(cell) cell.innerHTML = st.lastUSDT.toFixed(percision("USDT", st.lastUSDT)); 
+            }
+
+            else if(st.symbol == "IRT") {
+                temp = st.qty / st.lastUSDT;
+                per = percision("IRT", temp);
+                if(cell) cell.innerHTML = st.lastUSDT.toFixed(percision("USDT", st.lastUSDT)) + 
+                "(" + temp.toFixed(per) + " irt)";
+            }
+            else
+            if(cell) cell.innerHTML = st.lastUSDT.toFixed(percision("USDT", st.lastUSDT)) + 
+                "(" + temp.toFixed(per) + ")";
+            
+            temp = st.lastIRT / st.qty;
+            per = percision("IRT", temp);
+            cell = document.getElementById(st.symbol + "-irt");
+            if(st.symbol == "IRT") {
+                if(cell) cell.innerHTML = st.lastIRT.toFixed(percision("IRT", st.lastIRT, st.irtPercision));
+            }
+            else
+            if(cell) cell.innerHTML = st.lastIRT.toFixed(percision("IRT", st.lastIRT, st.irtPercision)) + 
+                "(" + temp.toFixed(percision("IRT", st.lastIRT / st.qty, st.irtPercision)) + ")";
+            cell = document.getElementById(st.symbol + "-status");
+            if(cell) cell.innerHTML = st.status + " - ";
+            if(st.maxUSDT != 0.0){
+                var tt = 0.0;
+                if(st.symbol == 'USDT') tt = st.lastIRT - st.maxUSDT;
+                else tt = st.lastUSDT - st.maxUSDT;
+                cell = document.getElementById(st.symbol + "-percent");
+                if(cell) cell.innerHTML = (100.0 * tt / st.maxUSDT).toFixed(3) + "%";
+            }
+            if(st.minUSDT < 999999999.0 && st.lastBuyUSDT != 0.0){
+                var tt = st.lastBuyUSDT - st.minUSDT;
+                //if(st.symbol == 'USDT') tt = st.lastIRT - st.maxUSDT;
+                //else tt = st.lastUSDT - st.maxUSDT;
+                cell = document.getElementById(st.symbol + "-percent-min");
+                if(cell) {
+                    if(st.symbol == 'IRT')
+                        cell.innerHTML = " ";
+                    else
+                        cell.innerHTML = (100.0 * tt / st.minUSDT).toFixed(3) + "% - ";
+                }
+            }
+        }
+        
+        function getAcount(){
+            fetch("/tabdeal/Source/Acount.php", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                },
+                body: `AcountType=Data`,
+            }).then((response) => response.text())
+            .then(function(res){
+                var jobj = JSON.parse(res);
+                if(jobj.commission == -1){
+                    showMessage('error in acount request : ' + jobj.error);    
+                    commission = undefined;
+                    asset = undefined;
+                }
+                else{
+                    commission = jobj.commission;
+                    showMessage('acount received!');
+                    showMessage('commission is :' + commission);
+                    var asTable = document.getElementById('asset-table-body');
+                    asTable.innerHTML = '<tr class="asset-table-header" id="asset-table-header">' + 
+                                '<th>Token</th><th>Qty.</th><th>Freez</th><th>USDT</th><th>IRT</th><th>Status</th></tr>';
+                    asset = [];
+                    jobj.asset.forEach(ast => {
+                        asset[ast.symbol] = ast;
+                        asset[ast.symbol].lastIRT = 0.0;
+                        asset[ast.symbol].lastUSDT = 0.0;
+                        asset[ast.symbol].lastBuyUSDT = 0.0;
+                        asset[ast.symbol].maxUSDT = 0.0;
+                        asset[ast.symbol].minUSDT = 9999999999.99;
+                        asset[ast.symbol].status = 0;
+                        asset[ast.symbol].depth = [];
+                        if(ast.symbol != 'USDT' && ast.symbol != 'IRT'){
+                            markets.push(ast.symbol + "_USDT");
+                        }
+                        if(ast.symbol == 'USDT'){
+                            ast.lastUSDT = ast.qty;
+                        }
+                        if(ast.symbol == 'IRT'){
+                            //lastIRT[ast.symbol] = ast.qty;
+                            ast.lastIRT = ast.qty;
+                        }
+                        var irtVal = (ast.symbol == 'IRT') ? ast.qty.toFixed(0) : 'loading...';
+                        var usdtVal = (ast.symbol == 'USDT') ? ast.qty : 'loading...';
+                        asTable.innerHTML += '<tr class="asset-table-row" id="asset-table-row-' + ast.symbol + '">' + 
+                                '<td class="asset-table-data" id="' + ast.symbol + '-symbol">' +
+                            '<img class="asset-icon" id="' + ast.symbol + '-icon" src="tabdeal/images/' + ast.symbol + '-icon.svg">' +
+                            '<span class="asset-name" id="' + ast.symbol + '-name">' + ast.symbol + '</span></td>' +
+                            '<td class="asset-table-data" id="' + ast.symbol + '-qty">' + ast.qty +'</td>' +
+                            '<td class="asset-table-data" id="' + ast.symbol + '-freeze">' + ast.freeze +'</td>' +
+                            '<td class="asset-table-data" id="' + ast.symbol + '-usdt">' + usdtVal + '</td>' +
+                            '<td class="asset-table-data" id="' + ast.symbol + '-irt">' + irtVal + '</td>' +
+                            '<td class="asset-table-data" id="' + ast.symbol + '-state">' +
+                                '<span class="asset-name" id="' + ast.symbol + '-status">loading... - </span>' +
+                                '<span class="asset-name" id="' + ast.symbol + '-percent-min"> </span>' +
+                                '<span class="asset-name" id="' + ast.symbol + '-percent"></span></td></tr>';
+
+                    });
+                    //listenkey = await getListenkey();
+                    socketManager();
+                }
+            }).catch(error => {
+                showMessage('error in acount request : ' + error.message);    
+            });
+        }
+        function getOrders(){
+            fetch("/tabdeal/Source/Acount.php", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                },
+                body: `OpenOrders=Data`,
+            }).then((response) => response.text())
+            .then(function(res){
+                var jobj = JSON.parse(res);
+                if(jobj.count == -1){
+                    showMessage('error in open orders request : ' + jobj.error);    
+                    //commission = undefined;
+                    //asset = undefined;
+                }
+                else{
+                    //commission = jobj.commission;
+                    showMessage('open orders received!');
+                    showMessage('orders count is :' + jobj.count);
+                    var asTable = document.getElementById('orders-table-body');
+                    if(jobj.count > 0){
+                        asTable.innerHTML = '<tr class="orders-table-header" id="orders-table-header">' + 
+                                    '<th>Market</th><th>Type</th><th>Side</th><th>Qty.</th><th>Exc. Qty.</th><th>Price</th><th>Status</th><th> </th></tr>';
+                        jobj.orders.forEach(ord => {
+                            var price = ord.price;
+                            if(ord.type == "MARKET"){
+                                if(ord.fills != undefined){
+                                    var sumqty= 0.0;
+                                    var sumprice = 0.0;
+                                    ord.fills.forEach(value => {
+                                        sumprice += value.price * value.qty;
+                                        sumqty += value.qty;
+                                    });
+                                    price = (sumprice / sumqty).toFixed(percision(ord.fills[0].commissionAsset, sumprice / sumqty), 8);
+                                }
+                            }
+                            else if(ord.type != "LIMIT")
+                            {
+                                price = ord.stopPrice;
+                            }
+                            asTable.innerHTML += '<tr class="orders-table-row" id="orders-table-row-' + ord.tabdealSymbol + '">' + 
+                                '<td class="orders-table-data" id="orders-' + ord.orderId + '-symbol">'+ ord.tabdealSymbol + '</td>' +
+                                '<td class="orders-table-data" id="orders-' + ord.orderId + '-type">' + ord.type +'</td>' +
+                                '<td class="orders-table-data" id="orders-' + ord.orderId + '-side">' + ord.side +'</td>' +
+                                '<td class="orders-table-data" id="orders-' + ord.orderId + '-origQty">' + ord.origQty + '</td>' +
+                                '<td class="orders-table-data" id="orders-' + ord.orderId + '-ExecQty">' + ord.executedQty + '</td>' +
+                                '<td class="orders-table-data" id="orders-' + ord.orderId + '-price">' + price + '</td>' +
+                                '<td class="orders-table-data" id="orders-' + ord.orderId + '-status">' + ord.status + '</td>' +
+                                '<td class="orders-table-data" id="orders-' + ord.orderId + '-cancel">' +  
+                                    '<button onclick="cancelOrder(\''+ ord.tabdealSymbol + '\',' + ord.orderId +')" style="width: 98%;">Cancel</button></td></tr>';
+
+                        });
+                        //listenkey = await getListenkey();
+                        //socketManager();
+                    }
+                    else {
+                        asTable.innerHTML = '<p style="text-align:center;font-sixe:medium;background-color:#96D4D4;margin:0px;"> there is no open order!</p>';
+                    }
+                }
+
+            }).catch(error => {
+                showMessage('error in open orders request : ' + error.message);    
+            });
+        }
+        function cancelOrder(symbol, orderId){
+            fetch("/tabdeal/Source/Acount.php", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                },
+                body: `CancelOrder=${orderId}&Symbol=${symbol}`,
+            }).then((response) => response.text())
+            .then(function(res){
+                var jobj = JSON.parse(res);
+                if(jobj.count == -1){
+                    showMessage('error in open orders request : ' + jobj.error);    
+                }
+                else{
+                    showMessage('cancel order received!');
+                    showMessage('order ' + jobj.order.symbol + ' ' + jobj.order.origQty + ' ' + jobj.order.price + ' ' + jobj.order.status);
+                    getOrders();
+                }
+            }).catch(error => {
+                showMessage('error in cancel order request : ' + error.message);    
+            });
+        }
+        
+        function showMessage(msg)
+        {
+            var output = document.getElementById("message-area");
+            output.innerHTML += '<br>' + msg;
+            output.scrollTop = output.scrollHeight;
+        }
+        function showReport(msg)
+        {
+            var output = document.getElementById("report-area");
+            output.innerHTML = msg;
+            output.scrollTop = output.scrollHeight;
+        }
+        function showConnectionData(msg)
+        {
+            var output = document.getElementById("connection-area");
+            output.innerHTML = msg;
+        }
+
+        function sale(count, bids, commission)
+        {
+            var totalPrice = 0.0;
+            for(var i = 0; i < bids.length; i++)
+            { 
+                var bid = bids[i];
+                if(count <= bid[1]){
+                    totalPrice += count * bid[0];
+                    break;
+                }else{
+                    totalPrice += bid[1] * bid[0];
+                    count -= (bid[1] * 1.0);
+                }
+            }
+            var karmozd = commission * totalPrice ;
+            return totalPrice - karmozd;
+        }
+        function buy(money, asks, commission)
+        {
+            var count = 0.0;
+            for(var i = 0; i < asks.length; i++)
+            {
+                var ask = asks[i];
+                if(money > 0.0 && ask[0] > 0){
+                    var cnt = money / ask[0];
+                    if(cnt > ask[1]){
+                        count += (ask[1] * 1.0);
+                        money -= (ask[1] * ask[0]);     
+                    }else{
+                        count += cnt;
+                        money = 0.0;//-= $cnt * $ask[0];
+                        break;
+                    }
+                }
+            }
+            var karmozd = commission * count;
+            return  count - karmozd;
+        }
+        function buyCount(count, asks, commission)
+        {
+            var realAmount = count / (1.0 - commission);// $this->markets[$marketSymbol]->market_commission);
+            var money = 0.0;
+            for(var i = 0; i < asks.length; i++){
+                var ask = asks[i];
+                if(realAmount > 0.0){
+                    if(realAmount >= ask[1]){
+                        realAmount -= ask[1];
+                        money += ask[1] * ask[0];                        
+                    }else{
+                        money += realAmount * ask[0];
+                        break;
+                    }
+                }
+            }
+            return money;
+        }
+        
+        function handleCommand(event){
+           
+           event.preventDefault();
+           
+           var ctb = document.getElementById("command");
+           var strcom = ctb.value.split(" ");
+           if(strcom[0].toUpperCase() === "SELL"){
+               if(strcom.length == 4){
+                   var tokenName = strcom[1];
+                   var tokenCount = +strcom[2];
+                   var tokenPrice = +strcom[3];
+                   showMessage("------------------------------------");
+                   showMessage(tokenCount.toLocaleString() + "  " + tokenName + " sealed " + tokenPrice);
+                   var total = tokenCount * tokenPrice;
+                   showMessage('total : ' + total.toLocaleString());
+                   var totalCommision = total * commission / 100.0;
+                   showMessage('total commision : ' + totalCommision.toLocaleString());
+                   var realTotal = total - totalCommision;
+                   showMessage('you got : ' +  realTotal.toLocaleString());
+                   var realPrice = realTotal / tokenCount;
+                   showMessage('token real price : ' + realPrice);
+                   var realBuyCount = tokenCount * (1 + commission / 100.0);
+                   var maxBuyPrice = realTotal / realBuyCount;
+                   showMessage('you must buy ' + realBuyCount.toLocaleString() + ' at max ' + maxBuyPrice);
+                   showMessage("------------------------------------");
+
+               }
+               else{
+                showMessage('Command Wrong! ');
+               }
+
+           }
+           else if(strcom[0].toUpperCase() === "BUY"){
+               if(strcom.length == 4){
+                   var tokenName = strcom[1];
+                   var tokenCount = +strcom[2];
+                   var tokenPrice = +strcom[3];
+                   showMessage("------------------------------------");
+                   showMessage(tokenCount.toLocaleString() + "  " + tokenName + " bied " + tokenPrice);
+                   var total = tokenCount * tokenPrice;
+                   showMessage('total payment : ' + total.toLocaleString());
+                   var totalCommision = tokenCount * commission / 100.0;
+                   showMessage('total commision : ' + totalCommision.toLocaleString() + " " + tokenName);
+                   var realTotal = tokenCount - totalCommision;
+                   showMessage('you got : ' +  realTotal.toLocaleString() + " " + tokenName);
+                   var realPrice = total / realTotal;
+                   showMessage('token real price : ' + realPrice);
+                   //var realSell = tokenCount * (1 + commision / 100.0);
+                   var minSellPrice = total * (1.0 + commission / 100.0) / realTotal;
+                   showMessage('you must Sell ' + realTotal.toLocaleString() + ' at min ' + minSellPrice);
+                   showMessage("------------------------------------");
+
+               }
+               else{
+                showMessage('Command Wrong! ');
+               }
+           }
+           else if(strcom[0].toUpperCase() === "CLEAR"){
+                var output = document.getElementById("output-area");
+                output.innerHTML = '<br>';
+           }
+           else if(strcom[0].toUpperCase() === "REFRESH" || strcom[0].toUpperCase() === "REFERESH"){
+               if(strcom.length > 1){
+                    if(strcom[1].toUpperCase() === "ORDERS" || strcom[1].toUpperCase() === "ORDER"){
+                        getOrders();
+                    }
+                    if(strcom[1].toUpperCase() === "ASSET" || strcom[1].toUpperCase() === "ACOUNT"){
+                        getAcount();
+                    }
+               }
+           }
+           else{
+                fetch("command.php", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                    },
+                    body: `cmd=${ctb.value}`,
+                }).then((response) => response.text())
+                .then(function(res){
+                    var jobj = JSON.parse(res);
+                    if(jobj.type == "OUTPUT"){
+                        showMessage(jobj.data);
+                    }
+                    }).catch(error => {
+                    showMessage('error in commmand request : ' + error.message);    
+                });
+           }
+           return false;
+       }
+
+    </script>
+</body>

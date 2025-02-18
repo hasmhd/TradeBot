@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href='http://www.fontonline.ir/css/BYekan.css' rel='stylesheet' type='text/css'>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+        <script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
+        <script src="//code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+        <script src="https://cdn.canvasjs.com/canvasjs.min.js"></script>
+        <link rel="stylesheet" href="css/hmmain.css" type='text/css'>
+       <style>
+       </style>
+    </head>
+    <body>
+        <div class="col-12" id="chart-area" style="height: 350px;"></div>
+        <div class="row">
+            
+            <div class="col-1 col-s-1" id="icon-side">
+                <img id="TokenIcon" src="/tabdeal/images/BTC-icon.svg">
+                <h2 id="TokenName">BTC</h2>
+                <p id="TokenPrice">51095.28</p>
+    
+            </div>
+            <div class="col-4 col-s-4" id="price-side" >
+                <table >
+                    <thead>
+                        <tr>
+                            <th>time</th>
+                            <th style="color:red">tether(tmn)</th>
+                            <th style="color:red">toman</th>
+                            <th style="color:green">tether(tmn)</th>
+                            <th style="color:green">toman</th>
+                        </tr>
+                        <tbody id="refreshBody">
+                           
+                        </tbody>
+                    </thead>
+                </table>
+            </div>
+        </div> 
+        
+        <div class="col-12" id="output-area" style="overflow-y:auto;height:150px;font-size: 11px;">
+        </div>
+        <div class="footer">
+            <form id="commandForm">
+                <input class="command" name="command" id="command" type="text" style="width: 100%; height: 20px;">
+            </form>
+        </div>
+
+
+    </body>
+    <script>
+        var CompareMarkets = true;
+        var chart = null;
+        var intervalID;
+        var tokenCount = 0.001;
+        var tokenPrice = 51095.28;// $shiba / 0.992;
+        var tokenName = "BTC";
+        var sleepTime = 60000;
+        var commision = 0.25;
+        var output = document.getElementById("output-area");
+        var commandForm = document.getElementById("commandForm");
+        commandForm.addEventListener('submit', handleCommand);
+        $(document).ready(function(){
+            setElementsValue();
+            startInterval();
+        });
+
+        function startInterval(){
+            if(intervalID){
+                clearInterval(intervalID);
+            }
+            startInsert();
+            intervalID = setInterval(startInsert, sleepTime);
+        }
+        function setElementsValue(){
+            document.getElementById("TokenName").innerHTML = tokenName;
+            document.getElementById("TokenPrice").innerHTML = tokenCount.toLocaleString() + "<br>" + (tokenCount * tokenPrice).toLocaleString();
+            document.getElementById("TokenIcon").src = "/tabdeal/images/" + tokenName + "-icon.svg";
+        }
+        function startInsert() {
+            //let tokenName = "SHIB";
+            if(CompareMarkets == true)
+            {
+                var sarmaye = tokenCount * tokenPrice;
+                fetch("/compare.php", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                    },
+                    body: `tokenName=${tokenName}&tokenCount=${tokenCount}&sarmaye=${sarmaye}`,
+                }).then((response) => response.text())
+                    .then(function(res) {
+                        var ttb = document.getElementById("refreshBody");
+                        ttb.innerHTML += res;
+                        ttb.scrollTop = ttb.scrollHeight;
+                        if(res.includes("alarm")){
+                            var audio = new Audio('/sound/alarm.mp3');
+                            audio.play();
+                        }
+                    });
+            }
+        }
+
+        function handleCommand(event){
+            
+                event.preventDefault();
+                var ctb = document.getElementById("command");
+                var strcom = ctb.value.split(" ");
+                if(strcom[0].toUpperCase() === "SELL"){
+                    if(strcom.length == 5){
+                        tokenName = strcom[1];
+                        tokenCount = +strcom[2];
+                        tokenPrice = +strcom[3];
+                        commision = +strcom[4];
+                        document.getElementById("refreshBody").innerHTML = "";
+                        setElementsValue();
+                        startInterval();
+                        output.innerHTML += '<br> ' + tokenCount.toLocaleString() + "  " + tokenName + " sealed " + tokenPrice;
+                        var total = tokenCount * tokenPrice;
+                        output.innerHTML += '<br> total : ' + total.toLocaleString();
+                        var totalCommision = total * commision / 100.0;
+                        output.innerHTML += '<br> total commision : ' + totalCommision.toLocaleString();
+                        var realTotal = total - totalCommision;
+                        output.innerHTML += '<br> you got : ' +  realTotal.toLocaleString();
+                        var realPrice = realTotal / tokenCount;
+                        output.innerHTML += '<br> token real price : ' + realPrice;
+                        var realBuyCount = tokenCount * (1 + commision / 100.0);
+                        var maxBuyPrice = realTotal / realBuyCount;
+                        output.innerHTML += '<br> you must buy ' + realBuyCount.toLocaleString() + ' at max ' + maxBuyPrice;
+
+
+                    }
+                    else{
+                        output.innerHTML += '<br> Command Wrong! ';
+                    }
+
+                }
+                if(strcom[0].toUpperCase() === "BUY"){
+                    if(strcom.length == 5){
+                        tokenName = strcom[1];
+                        tokenCount = +strcom[2];
+                        tokenPrice = +strcom[3];
+                        commision = +strcom[4];
+                        document.getElementById("refreshBody").innerHTML = "";
+                        setElementsValue();
+                        startInterval();
+                        output.innerHTML += '<br> ' + tokenCount.toLocaleString() + "  " + tokenName + " bied " + tokenPrice;
+                        var total = tokenCount * tokenPrice;
+                        output.innerHTML += '<br> total payment : ' + total.toLocaleString();
+                        var totalCommision = tokenCount * commision / 100.0;
+                        output.innerHTML += '<br> total commision : ' + totalCommision.toLocaleString() + " " + tokenName;
+                        var realTotal = tokenCount - totalCommision;
+                        output.innerHTML += '<br> you got : ' +  realTotal.toLocaleString() + " " + tokenName;
+                        var realPrice = total / realTotal;
+                        output.innerHTML += '<br> token real price : ' + realPrice;
+                        //var realSell = tokenCount * (1 + commision / 100.0);
+                        var minSellPrice = total * (1.0 + commision / 100.0) / realTotal;
+                        output.innerHTML += '<br> you must Sell ' + realTotal.toLocaleString() + ' at min ' + minSellPrice;
+
+
+                    }
+                    else{
+                        output.innerHTML += '<br> Command Wrong! ';
+                    }
+                }
+                if(strcom[0].toUpperCase() === "SET"){
+                    if(strcom.length >= 3){
+                        if(strcom[1].toUpperCase() === "SLEEPTIME"){
+                            sleepTime = +strcom[2] * 1000;
+                            //clearInterval(intervalID);
+                            startInterval();
+                            output.innerHTML += '<br> query repeat every ' + strcom[2] + ' second.';
+                        }
+                        if(strcom[1].toUpperCase() === "Compare"){
+                            CompareMarkets = (strcom[2] == "true") ? true : false;
+                        }
+                    }
+                }
+                else {
+                    fetch("/command.php", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                        },
+                        body: `cmd=${ctb.value}`,
+                    }).then((response) => response.json()).then(function(res) {
+                        if(res.type == "chart"){
+                            chart = new CanvasJS.Chart("chart-area", {
+                                data: [res.data]
+                            });
+                            chart.title = res.title;
+                        }
+                        else if(res.type == "output")
+                            output.innerHTML += '<br> ' + res.HTMLtext;
+                        //ttb.scrollTop = ttb.scrollHeight;
+                    });
+                }
+                return false;
+            }
+    </script>
+</html>

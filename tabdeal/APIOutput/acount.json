@@ -1,0 +1,29 @@
+{
+    "makerCommission": 40,
+    "takerCommission": 40,
+    "canTrade": true,
+    "canWithdraw": false,
+    "canDeposit": false,
+    "updateTime": 1657531256965,
+    "accountType": "SPOT",
+    "balances": [
+        {
+            "asset": "BTC",
+            "free": "0.05297200",
+            "freeze": "0.04700000"
+        },
+        {
+            "asset": "IRT",
+            "free": "99990721.20000000",
+            "freeze": "0.00000000"
+        },
+        {
+            "asset": "USDT",
+            "free": "0.00000000",
+            "freeze": "0.00000000"
+        },...
+      ],
+    "permissions": [
+        "SPOT"
+    ]
+}

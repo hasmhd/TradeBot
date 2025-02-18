@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href='http://www.fontonline.ir/css/BYekan.css' rel='stylesheet' type='text/css'>
+        <!--<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+         <script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
+        <script src="//code.jquery.com/jquery-migrate-1.2.1.min.js"></script> -->
+        <!-- <link rel="stylesheet" href="css/hmmain.css" type='text/css'> -->
+        <!-- <script type="text/javascript" src="script/BinanceSocket.js"></script> -->
+       <style>
+           [class*="col-"] {
+  float: left;
+  padding: 0px;
+  width: 100%;
+  /* max-height:300px; */
+}
+
+@media only screen and (min-width: 600px) {
+  .col-s-1 {width: 8.33%;}
+  .col-s-2 {width: 16.66%;}
+  .col-s-3 {width: 25%;}
+  .col-s-4 {width: 33.33%;}
+  .col-s-5 {width: 41.66%;}
+  .col-s-6 {width: 50%;}
+  .col-s-7 {width: 58.33%;}
+  .col-s-8 {width: 66.66%;}
+  .col-s-9 {width: 75%;}
+  .col-s-10 {width: 83.33%;}
+  .col-s-11 {width: 91.66%;}
+  .col-s-12 {width: 100%;}
+}
+
+@media only screen and (min-width: 768px) {
+  .col-1 {width: 8.33%;}
+  .col-2 {width: 16.66%;}
+  .col-3 {width: 25%;}
+  .col-4 {width: 33.33%;}
+  .col-5 {width: 41.66%;}
+  .col-6 {width: 50%;}
+  .col-7 {width: 58.33%;}
+  .col-8 {width: 66.66%;}
+  .col-9 {width: 75%;}
+  .col-10 {width: 83.33%;}
+  .col-11 {width: 91.66%;}
+  .col-12 {width: 100%;}
+}
+       </style>
+    </head>
+    <body>
+        <div class="col-7" style="overflow-y:auto;height:550px;font-size: 11px;">
+            <table class="asset-table" id="asset-table">
+                <tr class="asset-table-header" id="asset-table-header">
+                    <th>Token</th>
+                    <th>Qty.</th>
+                    <th>Freez</th>
+                    <th>USDT</th>
+                    <th>IRT</th>
+                </tr>
+                <tbody class="asset-table-body" id="asset-table-body"></tbody>
+            </table>
+        </div>
+        <div class="col-5" id="output-area" style="overflow-y:auto;height:550px;font-size: 11px;">
+        </div>
+        <div class="footer">
+            <form id="commandForm">
+                <input class="command" name="command" id="command" type="text" style="width: 100%; height: 20px;">
+            </form>
+        </div>
+    </body>
+    
+    <script>
+        var marketSymbol = "SHIB_USDT";
+        var baseFound = [{
+            'symbol' : "SHIB",
+            'qty': 25000000
+        }];
+        var liskeyintervalID;
+        var tradeIntervalID;
+        var tradesData = null;
+        var ordersData = null;
+        var socket = null;
+        var listenkey = null;//'hz3h4hnttyenz80dvhs0y40fs07n8idx4y87yb4ras4yjin3f0myurorg9axjxjv';
+        var output = document.getElementById("output-area");
+        var commandForm = document.getElementById("commandForm");
+        
+        commandForm.addEventListener('submit', handleCommand);
+        // if(listenkey == null){
+        //     listenkey = getListenkey();
+        //     if(listenkey == null)
+        //     {
+        //         showMessage('listenkey error!');
+        //     }
+        //     else{
+        //         showMessage('listenkey recievied : ' + listenkey);
+
+        //socketManager();
+        //getTradeData();
+        binanceWebSocket();
+        function binanceWebSocket(){
+            let pairs = [
+                'shibusdt',
+                'luncusdt',
+                'solusdt',
+            ];
+
+            pairs = pairs.map((pair) => `${pair}@trade`);
+            //const pairString = pairs.join('/');
+            //showMessage(pairString);
+            //const socketApi = new SocketClient(`stream?streams=${pairString}`);
+            var binws = new WebSocket('wss://data-stream.binance.com'); //stream?streams={pairString}`);
+
+            // pairs.forEach(pair => {
+            //     socketApi.setHandler(pair, (params) => showMessage(JSON.stringify(params)));
+            // })
+               
+            binws.onopen = function(e) {
+                var sdata = {
+                                "method": "SUBSCRIBE",
+                                "params": pairs, 
+                                "id": 1
+                            }
+                binws.send(JSON.stringify(sdata));
+                showMessage('binance webSocket connected');
+            };
+        
+            // binws.on('pong', () => {
+            //     showMessage('receieved pong from binance server');
+            // });
+            
+            // binws.on('ping', () => {
+            //     showMessage('receieved ping from binance server');
+            //     binws.pong();
+            // });
+        
+            binws.onclose = () => {
+                showMessage('binance webSocket closed');
+            };
+            
+            binws.onerror = (err) => {
+                showMessage('binance ws error : ', err);
+            };
+            
+            binws.onmessage = (msg) => {
+                try {
+                    const message = JSON.parse(msg.data);
+                    showMessage(syntaxHighlight(message));
+                } catch (e) {
+                    showMessage('bws Parse message failed', e);
+                }
+            }
+            
+                    //this.heartBeat();
+        
+            function heartBeat() {
+                setInterval(() => {
+                    if (binws.readyState === WebSocket.OPEN) {
+                        binws.ping();
+                        showMessage("ping server");
+                    }
+                }, 5000);
+            }
+        }
+        function syntaxHighlight(json) {
+            if (typeof json != 'string') {
+                json = JSON.stringify(json, undefined, 2);
+            }
+            json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                var cls = 'number';
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) {
+                        cls = 'key';
+                    } else {
+                        cls = 'string';
+                    }
+                } else if (/true|false/.test(match)) {
+                    cls = 'boolean';
+                } else if (/null/.test(match)) {
+                    cls = 'null';
+                }
+                return '<span class="' + cls + '">' + match + '</span>';
+            });
+        }
+        function socketManager()
+        {
+            socket = new WebSocket('wss://stream.binance.com:9443');
+            socket.onopen = function(e) {
+            var sdata = {
+                            "method": "SUBSCRIBE",
+                            "params": ["solusdt@aggTrade","shibusdt@aggTrade","luncusdt@aggTrade"], 
+                            "id": 1
+                        }
+            socket.send(JSON.stringify(sdata));
+            showMessage("[open] Connection established");
+            showMessage("Sending to server");
+        };
+
+            socket.onmessage = function(event) {
+                showMessage(event.data);
+                var jso = JSON.parse(event.data);
+                showMessage(syntaxHighlight(jso));
+                //showMessage(`[message] Data received from server: ${jso.stream}`);
+            };
+
+            socket.onclose = function(event) {
+                if (event.wasClean) {
+                    showMessage(`[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`);
+                } else {
+                    // e.g. server process killed or network down
+                    // event.code is usually 1006 in this case
+                    showMessage('[close] Connection died');
+                }
+            };
+
+            socket.onerror = function(error) {
+                showMessage(`[error] ${error.message}`);
+            };
+        }   
+        async function getTrades() {
+            let response = await fetch("/tabdeal/Source/TradeAnalaizer.php", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                },
+                body: `marketSymbol=${marketSymbol}`,
+            });
+            if(response.status === 200){
+                let res = await response.text();
+                //showMessage(res);
+                tradesData = JSON.parse(res);
+                showMessage(tradesData.symbol);
+                tradesData.lastTrades.forEach(trade => {
+                    showMessage(trade.time + " " + trade.price);
+                    
+                });
+                return tradesData;
+            }
+            else{
+                return null;
+            }
+        }
+        async function getListenkey(){
+            let response = await fetch("/tabdeal/Source/tabdealTools.php", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                },
+                body: `listenkey=${listenkey}`,
+            });
+            if(response.status === 200)
+            {
+                let res = await response.text();
+                var jso = JSON.parse(res);
+                listenkey = jso.listenKey;
+                if(listenkey){
+                    if(liskeyintervalID){
+                        clearInterval(liskeyintervalID);
+                    }
+                    liskeyintervalID = setInterval(getListenkey, 59 * 60000);
+                    return listenkey;
+                }
+            }
+            else {
+                    return null;                    
+            }
+        }
+        async function getTradeData(){
+            fetch("/tabdeal/Source/trader.php", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                },
+                body: `marketSymbol=${marketSymbol}`,
+            }).then((response) => response.text())
+            .then(function(res){
+                var jso = JSON.parse(res);
+                //let temp = jso.
+                showMessage(jso.time + "  " + jso.symbol);
+                showMessage('60 min ago     : ' + jso.last60min.min + ' - ' + jso.last60min.avr + ' - ' + jso.last60min.max + '(' + jso.last60min.count + ')');
+                showMessage('24 Hr. ago     : ' + jso.last24hr.min + ' - ' + jso.last24hr.avr + ' - ' + jso.last24hr.max + '(' + jso.last24hr.count  + ')');
+                showMessage('bids & asks    : ' + jso.orderData.maxBuyPrice + '(' + jso.orderData.buyWeight + ') - ' + jso.orderData.minSellPrice + '(' + jso.orderData.sellWeight + ')');
+                showMessage('last price     : ' + jso.lastPrice);
+                showMessage('direction      : ' + jso.typicalDirection);
+                showMessage('BM. direction  : ' + jso.buyerMakerDirection);
+                showMessage('Sell Percent   : ' + jso.sellPercent);
+                showMessage('Buy  Percent   : ' + jso.buyPercent);
+                showMessage('--------------------------------------------------------------');
+                if(tradeIntervalID){
+                    clearInterval(tradeIntervalID);
+                }
+                tradeIntervalID = setInterval(getTradeData, 60000);
+                //return listenkey;
+            });
+        }
+       
+        function showMessage(msg)
+        {
+            output.innerHTML += '<br>' + msg;
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        function handleCommand(event){
+
+           
+           event.preventDefault();
+           var ctb = document.getElementById("command");
+           var strcom = ctb.value.split(" ");
+        }
+        
+    </script>
+</html>

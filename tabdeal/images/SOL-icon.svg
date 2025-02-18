@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 23.0.2, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 1875 1875" style="enable-background:new 0 0 1875 1875;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:#FFFFFF;}
+	.st1{fill:url(#SVGID_1_);}
+	.st2{fill:url(#SVGID_2_);}
+	.st3{fill:url(#SVGID_3_);}
+</style>
+<circle class="st0" cx="937.5" cy="937.5" r="937.5"/>
+<title>Dogecoin (DOGE)</title>
+<g>
+	
+		<linearGradient id="SVGID_1_" gradientUnits="userSpaceOnUse" x1="1408.4224" y1="1141.6853" x2="769.9905" y2="2364.5388" gradientTransform="matrix(1 0 0 1 0 -766)">
+		<stop  offset="0" style="stop-color:#00FFA3"/>
+		<stop  offset="1" style="stop-color:#DC1FFF"/>
+	</linearGradient>
+	<path class="st1" d="M547.3,1176c7-7,16.6-11,26.7-11h922.5c16.9,0,25.3,20.3,13.4,32.3l-182.2,182.2c-7,7-16.6,11-26.7,11H378.5
+		c-16.9,0-25.3-20.3-13.4-32.3L547.3,1176z"/>
+	
+		<linearGradient id="SVGID_2_" gradientUnits="userSpaceOnUse" x1="1129.2897" y1="995.9547" x2="490.8578" y2="2218.8083" gradientTransform="matrix(1 0 0 1 0 -766)">
+		<stop  offset="0" style="stop-color:#00FFA3"/>
+		<stop  offset="1" style="stop-color:#DC1FFF"/>
+	</linearGradient>
+	<path class="st2" d="M547.3,495.6c7.3-7,16.9-11,26.7-11h922.5c16.9,0,25.3,20.3,13.4,32.3L1327.7,699c-7,7-16.6,11-26.7,11H378.5
+		c-16.9,0-25.3-20.3-13.4-32.3L547.3,495.6z"/>
+	
+		<linearGradient id="SVGID_3_" gradientUnits="userSpaceOnUse" x1="1267.9618" y1="1068.353" x2="629.5297" y2="2291.207" gradientTransform="matrix(1 0 0 1 0 -766)">
+		<stop  offset="0" style="stop-color:#00FFA3"/>
+		<stop  offset="1" style="stop-color:#DC1FFF"/>
+	</linearGradient>
+	<path class="st3" d="M1327.7,833.6c-7-7-16.6-11-26.7-11H378.5c-16.9,0-25.3,20.3-13.4,32.3L547.3,1037c7,7,16.6,11,26.7,11h922.5
+		c16.9,0,25.3-20.3,13.4-32.3L1327.7,833.6z"/>
+</g>
+</svg>
